@@ -20,13 +20,13 @@ export default function HeroSection() {
             {/* Headline */}
             <div>
               <h1
-                className="text-[56px] lg:text-[68px] leading-[1.05] font-semibold text-[#1c2b1a]"
+                className="text-[38px] sm:text-[52px] lg:text-[68px] leading-[1.05] font-semibold text-[#1c2b1a]"
                 style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
               >
                 Rooted in honesty.
               </h1>
               <h1
-                className="text-[56px] lg:text-[68px] leading-[1.05] font-normal italic text-[#6b7c5a]"
+                className="text-[38px] sm:text-[52px] lg:text-[68px] leading-[1.05] font-normal italic text-[#6b7c5a]"
                 style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
               >
                 Picked at dawn.
@@ -40,7 +40,7 @@ export default function HeroSection() {
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex items-center gap-3 mt-2">
+            <div className="flex flex-wrap items-center gap-3 mt-2">
               <Link
                 href="/marketplace"
                 className="flex items-center gap-2 bg-[#2d5a1b] text-white text-[14px] font-medium px-6 py-3 rounded-full hover:bg-[#3a7322] transition-colors"
@@ -57,10 +57,10 @@ export default function HeroSection() {
             </div>
 
             {/* Stats */}
-            <div className="flex items-start gap-12 mt-6 pt-6 border-t border-[#ddd8cc]">
+            <div className="flex flex-wrap items-start gap-8 sm:gap-12 mt-6 pt-6 border-t border-[#ddd8cc]">
               <div>
                 <p
-                  className="text-[36px] font-semibold text-[#1c2b1a] leading-none"
+                  className="text-[32px] sm:text-[36px] font-semibold text-[#1c2b1a] leading-none"
                   style={{ fontFamily: "Georgia, serif" }}
                 >
                   420+
@@ -71,7 +71,7 @@ export default function HeroSection() {
               </div>
               <div>
                 <p
-                  className="text-[36px] font-semibold text-[#1c2b1a] leading-none"
+                  className="text-[32px] sm:text-[36px] font-semibold text-[#1c2b1a] leading-none"
                   style={{ fontFamily: "Georgia, serif" }}
                 >
                   18k
@@ -82,7 +82,7 @@ export default function HeroSection() {
               </div>
               <div>
                 <p
-                  className="text-[36px] font-semibold text-[#1c2b1a] leading-none"
+                  className="text-[32px] sm:text-[36px] font-semibold text-[#1c2b1a] leading-none"
                   style={{ fontFamily: "Georgia, serif" }}
                 >
                   100%
@@ -111,7 +111,7 @@ export default function HeroSection() {
               </div>
 
               {/* Floating harvest card */}
-              <div className="absolute bottom-8 -left-8 lg:-left-12 bg-white rounded-2xl shadow-lg px-5 py-4 min-w-[180px]">
+              <div className="absolute bottom-8 left-4 sm:-left-8 lg:-left-12 bg-white rounded-2xl shadow-lg px-5 py-4 min-w-[180px]">
                 <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#7a8a6a] mb-1">
                   Harvested Today
                 </p>

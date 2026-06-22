@@ -56,7 +56,7 @@ export default function RealFarmsSection() {
             </p>
 
             <h2
-              className="text-[44px] font-semibold leading-[1.1] text-[#1c2b1a]"
+              className="text-[32px] sm:text-[44px] font-semibold leading-[1.1] text-[#1c2b1a]"
               style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
             >
               Real farms.{" "}

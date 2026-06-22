@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
 
           {/* Back link */}
           <Link
-            href="/Login"
+            href="/login"
             className="inline-flex items-center gap-2 text-[13px] text-[#7a8a6a] hover:text-[#2d5a1b] transition-colors mb-8"
           >
             <ArrowLeft size={14} />

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   LayoutDashboard, ShoppingBag, Heart,
-  User, LogOut, MapPin, Package, ArrowUpRight,
+  User, LogOut, MapPin, Package, ArrowUpRight, Menu, X,
 } from "lucide-react";
 
 const navItems = [
@@ -33,20 +33,35 @@ const bottomStats = [
   { label: "LIFETIME SPEND",   value: "$612" },
 ];
 
-// Progress steps
 const steps = ["Placed", "Picked", "In transit", "Delivered"];
-const currentStep = 2; // 0-indexed, "In transit"
+const currentStep = 2;
 
 export default function CustomerDashboard() {
   const [active, setActive] = useState("Overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-[#f5f2eb]">
 
-      {/* ── Sidebar ── */}
-      <aside className="w-[200px] shrink-0 bg-[#1e3d18] flex flex-col sticky top-0 h-screen">
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-[200px] bg-[#1e3d18] flex flex-col transition-transform duration-300 md:relative md:translate-x-0 md:z-auto md:shrink-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <button
+          className="md:hidden absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <X size={18} />
+        </button>
+
         <div className="px-5 pt-7 pb-6">
-          <Link href="/">
+          <Link href="/" onClick={() => setSidebarOpen(false)}>
             <p className="text-white text-[16px] font-semibold italic" style={{ fontFamily: "Georgia, serif" }}>
               AgriConnect
             </p>
@@ -61,7 +76,7 @@ export default function CustomerDashboard() {
             <Link
               key={label}
               href={href}
-              onClick={() => setActive(label)}
+              onClick={() => { setActive(label); setSidebarOpen(false); }}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-colors ${
                 active === label
                   ? "bg-white/15 text-white"
@@ -96,13 +111,26 @@ export default function CustomerDashboard() {
         </div>
       </aside>
 
-      {/* ── Main ── */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-[1060px] mx-auto px-8 py-10">
+      {/* Main */}
+      <main className="flex-1 min-w-0 overflow-y-auto">
+        <div className="max-w-[1060px] mx-auto px-4 sm:px-8 py-6 sm:py-10">
+
+          {/* Mobile top bar */}
+          <div className="md:hidden flex items-center gap-3 mb-6">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 text-[#4a5568] hover:text-[#1c2b1a] transition-colors"
+            >
+              <Menu size={22} />
+            </button>
+            <p className="text-[16px] font-semibold italic text-[#1c2b1a]" style={{ fontFamily: "Georgia, serif" }}>
+              AgriConnect
+            </p>
+          </div>
 
           {/* Greeting */}
           <h1
-            className="text-[42px] font-semibold text-[#1c2b1a] leading-tight mb-7"
+            className="text-[32px] sm:text-[42px] font-semibold text-[#1c2b1a] leading-tight mb-7"
             style={{ fontFamily: "Georgia, serif" }}
           >
             Hello, Clara.{" "}
@@ -110,17 +138,17 @@ export default function CustomerDashboard() {
           </h1>
 
           {/* Active order banner */}
-          <div className="bg-[#1e3d18] rounded-2xl px-7 py-6 mb-6">
-            <div className="flex items-start justify-between mb-5">
+          <div className="bg-[#1e3d18] rounded-2xl px-5 sm:px-7 py-5 sm:py-6 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
               <div className="flex items-center gap-4">
-                <div className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center">
+                <div className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center shrink-0">
                   <Package size={18} className="text-white" />
                 </div>
                 <div>
                   <p className="text-white/60 text-[11px] font-semibold tracking-[0.15em] uppercase mb-0.5">
                     Order #8812 — In Transit
                   </p>
-                  <p className="text-white text-[22px] font-semibold" style={{ fontFamily: "Georgia, serif" }}>
+                  <p className="text-white text-[18px] sm:text-[22px] font-semibold" style={{ fontFamily: "Georgia, serif" }}>
                     Arriving tomorrow, 8–10am
                   </p>
                   <p className="flex items-center gap-1.5 text-white/60 text-[12px] mt-1">
@@ -129,7 +157,7 @@ export default function CustomerDashboard() {
                   </p>
                 </div>
               </div>
-              <button className="px-5 py-2 bg-white/15 hover:bg-white/25 text-white text-[13px] font-medium rounded-full transition-colors">
+              <button className="px-5 py-2 bg-white/15 hover:bg-white/25 text-white text-[13px] font-medium rounded-full transition-colors self-start sm:self-auto whitespace-nowrap">
                 Track order
               </button>
             </div>
@@ -140,7 +168,7 @@ export default function CustomerDashboard() {
                 {steps.map((step, i) => (
                   <span
                     key={step}
-                    className={`text-[11px] font-medium ${
+                    className={`text-[10px] sm:text-[11px] font-medium ${
                       i <= currentStep ? "text-white" : "text-white/30"
                     }`}
                   >
@@ -151,19 +179,19 @@ export default function CustomerDashboard() {
               <div className="h-1 bg-white/20 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-white rounded-full transition-all"
-                  style={{ width: `${((currentStep) / (steps.length - 1)) * 100}%` }}
+                  style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
                 />
               </div>
             </div>
           </div>
 
           {/* Two columns */}
-          <div className="grid grid-cols-[1fr_320px] gap-5 mb-5">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 mb-5">
 
             {/* Recent orders */}
-            <div className="bg-white border border-[#ede8df] rounded-2xl p-6">
+            <div className="bg-white border border-[#ede8df] rounded-2xl p-5 sm:p-6">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-[20px] font-semibold text-[#1c2b1a]" style={{ fontFamily: "Georgia, serif" }}>
+                <h2 className="text-[18px] sm:text-[20px] font-semibold text-[#1c2b1a]" style={{ fontFamily: "Georgia, serif" }}>
                   Recent orders
                 </h2>
                 <Link href="/dashboard/customer/orders" className="text-[13px] font-medium text-[#2d5a1b] hover:underline flex items-center gap-1">
@@ -173,7 +201,7 @@ export default function CustomerDashboard() {
 
               <div className="flex flex-col divide-y divide-[#f5f2eb]">
                 {orders.map((o) => (
-                  <div key={o.id} className="flex items-center gap-4 py-3.5">
+                  <div key={o.id} className="flex items-center gap-3 py-3.5">
                     <div className="w-10 h-10 rounded-full bg-[#f0ece4] flex items-center justify-center text-[11px] font-semibold text-[#7a8a6a] shrink-0">
                       #{o.num}
                     </div>
@@ -181,8 +209,8 @@ export default function CustomerDashboard() {
                       <p className="text-[14px] font-semibold text-[#1c2b1a]">Order {o.id}</p>
                       <p className="text-[12px] text-[#9aaa8a]">{o.date} · {o.items}</p>
                     </div>
-                    <p className="text-[14px] font-semibold text-[#1c2b1a] mr-3">{o.total}</p>
-                    <span className={`text-[10px] font-bold tracking-wide px-3 py-1 rounded-full shrink-0 ${o.statusColor}`}>
+                    <p className="text-[14px] font-semibold text-[#1c2b1a] mr-2 shrink-0">{o.total}</p>
+                    <span className={`text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-full shrink-0 ${o.statusColor}`}>
                       {o.status}
                     </span>
                   </div>
@@ -191,9 +219,9 @@ export default function CustomerDashboard() {
             </div>
 
             {/* Wishlist */}
-            <div className="bg-white border border-[#ede8df] rounded-2xl p-6">
+            <div className="bg-white border border-[#ede8df] rounded-2xl p-5 sm:p-6">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-[20px] font-semibold text-[#1c2b1a]" style={{ fontFamily: "Georgia, serif" }}>
+                <h2 className="text-[18px] sm:text-[20px] font-semibold text-[#1c2b1a]" style={{ fontFamily: "Georgia, serif" }}>
                   Wishlist
                 </h2>
                 <Heart size={16} className="text-[#9aaa8a]" />
@@ -221,14 +249,14 @@ export default function CustomerDashboard() {
           </div>
 
           {/* Bottom stats */}
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {bottomStats.map((s) => (
               <div key={s.label} className="bg-white border border-[#ede8df] rounded-2xl px-6 py-5">
                 <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[#9aaa8a] mb-2">
                   {s.label}
                 </p>
                 <p
-                  className="text-[36px] font-semibold text-[#1c2b1a] leading-none"
+                  className="text-[32px] sm:text-[36px] font-semibold text-[#1c2b1a] leading-none"
                   style={{ fontFamily: "Georgia, serif" }}
                 >
                   {s.value}

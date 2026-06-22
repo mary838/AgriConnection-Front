@@ -103,7 +103,7 @@ export default function ProductDetailPage() {
 
             {/* Title */}
             <h1
-              className="text-[42px] font-semibold text-[#1c2b1a] leading-tight -mt-2"
+              className="text-[32px] sm:text-[42px] font-semibold text-[#1c2b1a] leading-tight -mt-2"
               style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
             >
               {product.name}
@@ -121,7 +121,7 @@ export default function ProductDetailPage() {
             {/* Price */}
             <div className="flex items-baseline gap-2">
               <span
-                className="text-[44px] font-semibold text-[#1c2b1a]"
+                className="text-[36px] sm:text-[44px] font-semibold text-[#1c2b1a]"
                 style={{ fontFamily: "Georgia, serif" }}
               >
                 ${product.pricePerUnit.toFixed(2)}

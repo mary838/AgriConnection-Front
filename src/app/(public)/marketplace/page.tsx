@@ -62,7 +62,7 @@ export default function MarketplacePage() {
             The Marketplace
           </p>
           <h1
-            className="text-[44px] font-semibold text-[#1c2b1a] leading-tight mb-2"
+            className="text-[32px] sm:text-[44px] font-semibold text-[#1c2b1a] leading-tight mb-2"
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             Today's fresh harvest
@@ -73,8 +73,8 @@ export default function MarketplacePage() {
         </div>
 
         {/* Search + controls */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex-1 relative">
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <div className="flex-1 min-w-[200px] relative">
             <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9aaa8a]" />
             <input
               type="text"

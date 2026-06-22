@@ -4,10 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   LayoutDashboard, Package, ShoppingBag, BarChart2,
-  Settings, LogOut, Plus, ArrowUpRight, TrendingUp,
+  Settings, LogOut, Plus, ArrowUpRight, TrendingUp, Menu, X,
 } from "lucide-react";
 
-// ── Sidebar nav ──────────────────────────────────────────────────────────────
 const navItems = [
   { icon: LayoutDashboard, label: "Overview",  href: "/dashboard/farmer" },
   { icon: Package,         label: "Products",  href: "/dashboard/farmer/products" },
@@ -16,7 +15,6 @@ const navItems = [
   { icon: Settings,        label: "Settings",  href: "/dashboard/farmer/settings" },
 ];
 
-// ── Stats ────────────────────────────────────────────────────────────────────
 const stats = [
   { label: "Total revenue",  value: "$12,480", sub: "+12%",        subColor: "text-[#2d5a1b]", featured: false },
   { label: "Active orders",  value: "24",      sub: "8 pending",   subColor: "text-[#7a8a6a]", featured: false },
@@ -24,7 +22,6 @@ const stats = [
   { label: "Platform health",value: "Optimal", sub: "Verified farmer", subColor: "text-white/70", featured: true },
 ];
 
-// ── Inventory ────────────────────────────────────────────────────────────────
 const inventory = [
   { id: 1, name: "Heirloom Tomatoes", price: "$4.50/lb", stock: "In stock: 140 units", lowStock: false, primaryAction: "Edit",    secondaryAction: "Archive", image: "https://images.unsplash.com/photo-1582284540020-8acbe03f4924?w=600&q=80" },
   { id: 2, name: "Curly Green Kale",  price: "$3.00/ea", stock: "Low stock: 12 units", lowStock: true,  primaryAction: "Restock", secondaryAction: "Archive", image: "https://images.unsplash.com/photo-1524179091875-bf99a9a6af57?w=600&q=80" },
@@ -32,7 +29,6 @@ const inventory = [
   { id: 4, name: "Wildflower Honey",  price: "$12.50/jar",stock:"In stock: 32 units",  lowStock: false, primaryAction: "Edit",    secondaryAction: "Archive", image: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&q=80" },
 ];
 
-// ── Orders ───────────────────────────────────────────────────────────────────
 const orders = [
   { id: "#8812", customer: "Clara J.",  initials: "C", items: "3 items",  status: "PAID",    statusColor: "bg-[#eaf2e4] text-[#2d5a1b]" },
   { id: "#8811", customer: "Mark T.",   initials: "M", items: "12 items", status: "PENDING", statusColor: "bg-[#fef3e2] text-[#b45309]" },
@@ -40,22 +36,37 @@ const orders = [
   { id: "#8805", customer: "Diego R.",  initials: "D", items: "5 items",  status: "PAID",    statusColor: "bg-[#eaf2e4] text-[#2d5a1b]" },
 ];
 
-// ── Weekly bar chart data ────────────────────────────────────────────────────
 const weekData = [40, 65, 50, 80, 95, 70, 60];
-const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const maxVal = Math.max(...weekData);
 
 export default function FarmerDashboard() {
   const [active, setActive] = useState("Overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-[#f5f2eb]">
 
-      {/* ── Sidebar ── */}
-      <aside className="w-[220px] shrink-0 bg-[#1e3d18] flex flex-col sticky top-0 h-screen">
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-[220px] bg-[#1e3d18] flex flex-col transition-transform duration-300 md:relative md:translate-x-0 md:z-auto md:shrink-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        {/* Close button (mobile) */}
+        <button
+          className="md:hidden absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <X size={18} />
+        </button>
+
         {/* Logo */}
         <div className="px-6 pt-7 pb-6">
-          <Link href="/" className="block">
+          <Link href="/" onClick={() => setSidebarOpen(false)}>
             <p className="text-white text-[17px] font-semibold italic" style={{ fontFamily: "Georgia, serif" }}>
               AgriConnect
             </p>
@@ -71,7 +82,7 @@ export default function FarmerDashboard() {
             <Link
               key={label}
               href={href}
-              onClick={() => setActive(label)}
+              onClick={() => { setActive(label); setSidebarOpen(false); }}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-colors ${
                 active === label
                   ? "bg-white/15 text-white"
@@ -106,28 +117,41 @@ export default function FarmerDashboard() {
         </div>
       </aside>
 
-      {/* ── Main content ── */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-[1100px] mx-auto px-8 py-10">
+      {/* Main content */}
+      <main className="flex-1 min-w-0 overflow-y-auto">
+        <div className="max-w-[1100px] mx-auto px-4 sm:px-8 py-6 sm:py-10">
+
+          {/* Mobile top bar */}
+          <div className="md:hidden flex items-center gap-3 mb-6">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 text-[#4a5568] hover:text-[#1c2b1a] transition-colors"
+            >
+              <Menu size={22} />
+            </button>
+            <p className="text-[17px] font-semibold italic text-[#1c2b1a]" style={{ fontFamily: "Georgia, serif" }}>
+              AgriConnect
+            </p>
+          </div>
 
           {/* Header */}
-          <div className="flex items-start justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
             <div>
               <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#2d5a1b] mb-1">
                 Morning, Marcus
               </p>
-              <h1 className="text-[36px] font-semibold text-[#1c2b1a] leading-tight" style={{ fontFamily: "Georgia, serif" }}>
+              <h1 className="text-[28px] sm:text-[36px] font-semibold text-[#1c2b1a] leading-tight" style={{ fontFamily: "Georgia, serif" }}>
                 Green Valley Farms
               </h1>
-              <p className="text-[22px] font-normal italic text-[#7a8a6a]" style={{ fontFamily: "Georgia, serif" }}>
+              <p className="text-[18px] sm:text-[22px] font-normal italic text-[#7a8a6a]" style={{ fontFamily: "Georgia, serif" }}>
                 Performance overview
               </p>
             </div>
-            <div className="flex items-center gap-3 mt-2">
-              <button className="px-5 py-2.5 border border-[#c8d0b8] rounded-full text-[13px] font-medium text-[#1c2b1a] bg-white hover:bg-[#f0ece4] transition-colors">
+            <div className="flex items-center gap-3">
+              <button className="px-4 sm:px-5 py-2.5 border border-[#c8d0b8] rounded-full text-[13px] font-medium text-[#1c2b1a] bg-white hover:bg-[#f0ece4] transition-colors whitespace-nowrap">
                 Export report
               </button>
-              <button className="flex items-center gap-2 px-5 py-2.5 bg-[#1e3d18] text-white rounded-full text-[13px] font-medium hover:bg-[#2d5a1b] transition-colors">
+              <button className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-[#1e3d18] text-white rounded-full text-[13px] font-medium hover:bg-[#2d5a1b] transition-colors whitespace-nowrap">
                 <Plus size={14} />
                 New product
               </button>
@@ -135,11 +159,11 @@ export default function FarmerDashboard() {
           </div>
 
           {/* Stats grid */}
-          <div className="grid grid-cols-4 gap-4 mb-10">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
             {stats.map((s) => (
               <div
                 key={s.label}
-                className={`rounded-2xl p-5 flex flex-col gap-2 ${
+                className={`rounded-2xl p-4 sm:p-5 flex flex-col gap-2 ${
                   s.featured ? "bg-[#1e3d18]" : "bg-white border border-[#ede8df]"
                 }`}
               >
@@ -147,12 +171,12 @@ export default function FarmerDashboard() {
                   {s.label}
                 </p>
                 <p
-                  className={`text-[30px] font-semibold leading-none ${s.featured ? "text-white" : "text-[#1c2b1a]"}`}
+                  className={`text-[24px] sm:text-[30px] font-semibold leading-none ${s.featured ? "text-white" : "text-[#1c2b1a]"}`}
                   style={{ fontFamily: "Georgia, serif" }}
                 >
                   {s.value}
                 </p>
-                <p className={`text-[12px] font-medium ${s.featured ? s.subColor : s.subColor}`}>
+                <p className={`text-[12px] font-medium ${s.subColor}`}>
                   {s.sub}
                 </p>
               </div>
@@ -160,12 +184,12 @@ export default function FarmerDashboard() {
           </div>
 
           {/* Two-column layout */}
-          <div className="grid grid-cols-[1fr_300px] gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
 
             {/* Left: Inventory */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[22px] font-semibold text-[#1c2b1a]" style={{ fontFamily: "Georgia, serif" }}>
+                <h2 className="text-[20px] sm:text-[22px] font-semibold text-[#1c2b1a]" style={{ fontFamily: "Georgia, serif" }}>
                   Current inventory
                 </h2>
                 <Link href="/dashboard/farmer/products" className="text-[13px] font-medium text-[#2d5a1b] hover:underline">
@@ -173,7 +197,7 @@ export default function FarmerDashboard() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {inventory.map((item) => (
                   <div key={item.id} className="bg-white rounded-2xl overflow-hidden border border-[#ede8df]">
                     <div className="aspect-[4/3] overflow-hidden bg-[#e8e0d0]">
@@ -208,7 +232,7 @@ export default function FarmerDashboard() {
 
               {/* Incoming orders */}
               <div>
-                <h2 className="text-[22px] font-semibold text-[#1c2b1a] mb-4" style={{ fontFamily: "Georgia, serif" }}>
+                <h2 className="text-[20px] sm:text-[22px] font-semibold text-[#1c2b1a] mb-4" style={{ fontFamily: "Georgia, serif" }}>
                   Incoming orders
                 </h2>
                 <div className="flex flex-col gap-3">
@@ -235,7 +259,7 @@ export default function FarmerDashboard() {
                   <TrendingUp size={11} className="text-white/40" />
                   Weekly Insight
                 </p>
-                <h3 className="text-[20px] font-semibold italic text-white leading-tight" style={{ fontFamily: "Georgia, serif" }}>
+                <h3 className="text-[18px] sm:text-[20px] font-semibold italic text-white leading-tight" style={{ fontFamily: "Georgia, serif" }}>
                   Honey crisp apples outperforming
                 </h3>
                 <p className="text-[12px] text-white/60 leading-[1.6]">

@@ -63,7 +63,7 @@ export default function CartPage() {
         {/* Header */}
         <div className="mb-8">
           <h1
-            className="text-[42px] font-semibold text-[#1c2b1a] leading-tight"
+            className="text-[32px] sm:text-[42px] font-semibold text-[#1c2b1a] leading-tight"
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             Your basket
@@ -91,56 +91,66 @@ export default function CartPage() {
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white border border-[#ede8df] rounded-2xl px-5 py-4 flex items-center gap-5"
+                  className="bg-white border border-[#ede8df] rounded-2xl px-4 sm:px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4"
                 >
-                  <div className="w-[72px] h-[72px] rounded-xl overflow-hidden bg-[#e8e0d0] shrink-0">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
+                  {/* Top row: image + info + mobile remove */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-[64px] h-[64px] sm:w-[72px] sm:h-[72px] rounded-xl overflow-hidden bg-[#e8e0d0] shrink-0">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className="text-[15px] font-semibold text-[#1c2b1a]"
+                        style={{ fontFamily: "Georgia, serif" }}
+                      >
+                        {item.name}
+                      </p>
+                      <p className="text-[12px] text-[#7a8a6a] mt-0.5">{item.farm}</p>
+                      <p className="text-[12px] text-[#9aaa8a] mt-0.5">{item.unit}</p>
+                    </div>
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="sm:hidden text-[#c8d0b8] hover:text-[#7a8a6a] transition-colors"
+                      aria-label="Remove item"
+                    >
+                      <X size={16} />
+                    </button>
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className="text-[15px] font-semibold text-[#1c2b1a]"
-                      style={{ fontFamily: "Georgia, serif" }}
-                    >
-                      {item.name}
+                  {/* Bottom row: qty + price + desktop remove */}
+                  <div className="flex items-center gap-3 sm:ml-auto">
+                    <div className="flex items-center gap-3 border border-[#e0dbd0] rounded-full px-4 py-2 bg-white">
+                      <button
+                        onClick={() => updateQty(item.id, -1)}
+                        className="text-[#7a8a6a] hover:text-[#1c2b1a] transition-colors"
+                      >
+                        <Minus size={13} />
+                      </button>
+                      <span className="text-[14px] font-medium text-[#1c2b1a] min-w-[16px] text-center">
+                        {item.qty}
+                      </span>
+                      <button
+                        onClick={() => updateQty(item.id, 1)}
+                        className="text-[#7a8a6a] hover:text-[#1c2b1a] transition-colors"
+                      >
+                        <Plus size={13} />
+                      </button>
+                    </div>
+                    <p className="text-[15px] font-semibold text-[#1c2b1a] min-w-[56px] text-right">
+                      ${(item.priceEach * item.qty).toFixed(2)}
                     </p>
-                    <p className="text-[12px] text-[#7a8a6a] mt-0.5">{item.farm}</p>
-                    <p className="text-[12px] text-[#9aaa8a] mt-0.5">{item.unit}</p>
-                  </div>
-
-                  <div className="flex items-center gap-3 border border-[#e0dbd0] rounded-full px-4 py-2 bg-white">
                     <button
-                      onClick={() => updateQty(item.id, -1)}
-                      className="text-[#7a8a6a] hover:text-[#1c2b1a] transition-colors"
+                      onClick={() => removeItem(item.id)}
+                      className="hidden sm:block text-[#c8d0b8] hover:text-[#7a8a6a] transition-colors"
+                      aria-label="Remove item"
                     >
-                      <Minus size={13} />
-                    </button>
-                    <span className="text-[14px] font-medium text-[#1c2b1a] min-w-[16px] text-center">
-                      {item.qty}
-                    </span>
-                    <button
-                      onClick={() => updateQty(item.id, 1)}
-                      className="text-[#7a8a6a] hover:text-[#1c2b1a] transition-colors"
-                    >
-                      <Plus size={13} />
+                      <X size={16} />
                     </button>
                   </div>
-
-                  <p className="text-[15px] font-semibold text-[#1c2b1a] min-w-[56px] text-right">
-                    ${(item.priceEach * item.qty).toFixed(2)}
-                  </p>
-
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="text-[#c8d0b8] hover:text-[#7a8a6a] transition-colors ml-1"
-                    aria-label="Remove item"
-                  >
-                    <X size={16} />
-                  </button>
                 </div>
               ))}
             </div>
