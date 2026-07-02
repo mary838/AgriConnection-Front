@@ -5,33 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Minus, Plus, Leaf, Truck, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
-
-type ProductImage = {
-  id?: string;
-  imageUrl: string;
-  isPrimary?: boolean;
-};
-
-type Product = {
-  id: string;
-  productCode: string;
-  name: string;
-  category: string;
-  farmerId: string;
-  imageUrl?: string;
-  priceUsd: number | string;
-  unit: string;
-  images?: ProductImage[];
-  farmer?: {
-    id: string;
-    farmerCode?: string;
-    user?: {
-      name?: string;
-    };
-  };
-};
+import { products as productsApi, getToken, ApiError, type Product } from "@/lib/api";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=800&q=80";
@@ -62,32 +36,19 @@ export default function ProductDetailPage() {
         setLoading(true);
         setError("");
 
-        const token =
-          localStorage.getItem("access_token") ||
-          sessionStorage.getItem("access_token");
-
-        if (!token) {
+        if (!getToken()) {
           router.push(`/login?redirect=/marketplace/${productId}`);
           return;
         }
 
-        const res = await fetch(`${API_URL}/products/${productId}`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to load product.");
-        }
-
+        const data = await productsApi.get(productId);
         setProduct(data);
-      } catch (err: any) {
-        setError(err.message || "Something went wrong.");
+      } catch (err: unknown) {
+        const message =
+          err instanceof ApiError || err instanceof Error
+            ? err.message
+            : "Something went wrong.";
+        setError(message);
       } finally {
         setLoading(false);
       }

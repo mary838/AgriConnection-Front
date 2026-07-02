@@ -9,10 +9,9 @@ import { useAuth } from "@/context/AuthContext";
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "Marketplace", href: "/marketplace" },
-  { label: "Farmer Portal", href: "/dashboard/farmer" },
-  { label: "Admin", href: "/dashboard/admin" },
-  { label: "My Account", href: "/dashboard/customer" },
-  { label: "Profile", href: "/profile" },
+  { label: "Farmer Portal", href: "/dashboard/farmer", role: "farmer" },
+  { label: "Admin", href: "/dashboard/admin", role: "admin" },
+  { label: "My Account", href: "/dashboard/customer", role: "customer" },
 ];
 
 interface NavbarProps {
@@ -42,11 +41,6 @@ export default function Navbar({ cartCount = 3 }: NavbarProps) {
 
   const handleLogout = async () => {
     await logout();
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("customer");
-    localStorage.removeItem("farmer");
-    sessionStorage.removeItem("access_token");
     router.push("/");
   };
 
@@ -72,7 +66,7 @@ export default function Navbar({ cartCount = 3 }: NavbarProps) {
 
           <div className="hidden md:flex items-center gap-0 flex-1">
             {navLinks.map((link) => {
-              if (!user && link.href === "/profile") return null;
+              if (link.role && user?.role !== link.role) return null;
 
               return (
                 <Link
@@ -151,7 +145,7 @@ export default function Navbar({ cartCount = 3 }: NavbarProps) {
       {mobileOpen && (
         <div className="md:hidden border-t border-[#dce4d3] bg-white/90 backdrop-blur-md px-6 py-3 flex flex-col">
           {navLinks.map((link) => {
-            if (!user && link.href === "/profile") return null;
+            if (link.role && user?.role !== link.role) return null;
 
             return (
               <Link

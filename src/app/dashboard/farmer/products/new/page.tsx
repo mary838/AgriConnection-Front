@@ -3,21 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
-
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-};
-
-type Farmer = {
-  id: string;
-  userId: string;
-  provinceId: number;
-};
+import { profile as profileApi, farmers as farmersApi, products as productsApi, inventory as inventoryApi, getToken, ApiError, type Farmer } from "@/lib/api";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -46,40 +32,13 @@ export default function NewProductPage() {
   useEffect(() => {
     const fetchFarmer = async () => {
       try {
-        const token =
-          localStorage.getItem("access_token") ||
-          sessionStorage.getItem("access_token");
-
-        if (!token) {
+        if (!getToken()) {
           router.push("/login");
           return;
         }
 
-        const profileRes = await fetch(`${API_URL}/profile`, {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const profileData: User = await profileRes.json();
-
-        if (!profileRes.ok) {
-          throw new Error("Failed to load profile.");
-        }
-
-        const farmersRes = await fetch(`${API_URL}/farmers`, {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const farmersData: Farmer[] = await farmersRes.json();
-
-        if (!farmersRes.ok) {
-          throw new Error("Failed to load farmer profile.");
-        }
+        const profileData = await profileApi.get();
+        const farmersData = await farmersApi.list();
 
         const currentFarmer = farmersData.find(
           (item) => item.userId === profileData.id
@@ -90,8 +49,12 @@ export default function NewProductPage() {
         }
 
         setFarmer(currentFarmer);
-      } catch (err: any) {
-        setError(err.message || "Something went wrong.");
+      } catch (err: unknown) {
+        const message =
+          err instanceof ApiError || err instanceof Error
+            ? err.message
+            : "Something went wrong.";
+        setError(message);
       } finally {
         setPageLoading(false);
       }
@@ -128,86 +91,39 @@ export default function NewProductPage() {
       setLoading(true);
       setError("");
 
-      const token =
-        localStorage.getItem("access_token") ||
-        sessionStorage.getItem("access_token");
-
-      if (!token) {
+      if (!getToken()) {
         router.push("/login");
         return;
       }
 
-      const productRes = await fetch(`${API_URL}/products`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          productCode: form.productCode.trim(),
-          name: form.name.trim(),
-          category: form.category,
-          farmerId: farmer.id,
-          priceUsd: Number(form.priceUsd),
-          unit: form.unit,
-          images: [],
-        }),
+      const productData = await productsApi.create({
+        productCode: form.productCode.trim(),
+        name: form.name.trim(),
+        category: form.category,
+        farmerId: farmer.id,
+        priceUsd: Number(form.priceUsd),
+        unit: form.unit,
+        images: [],
       });
-
-      const productData = await productRes.json();
-
-      if (!productRes.ok) {
-        throw new Error(productData.message || "Create product failed.");
-      }
 
       for (const image of images) {
-        const uploadData = new FormData();
-        uploadData.append("image", image);
-
-        const uploadRes = await fetch(
-          `${API_URL}/products/${productData.id}/images`,
-          {
-            method: "POST",
-            headers: {
-              Accept: "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: uploadData,
-          }
-        );
-
-        const uploadResult = await uploadRes.json();
-
-        if (!uploadRes.ok) {
-          throw new Error(uploadResult.message || "Image upload failed.");
-        }
+        await productsApi.uploadImage(productData.id, image);
       }
 
-      const inventoryRes = await fetch(`${API_URL}/inventory`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          productId: productData.id,
-          provinceId: farmer.provinceId,
-          stockQty: Number(form.stockQty),
-          lowStockThreshold: Number(form.lowStockThreshold),
-        }),
+      await inventoryApi.create({
+        productId: productData.id,
+        provinceId: farmer.provinceId,
+        stockQty: Number(form.stockQty),
+        lowStockThreshold: Number(form.lowStockThreshold),
       });
 
-      const inventoryData = await inventoryRes.json();
-
-      if (!inventoryRes.ok) {
-        throw new Error(inventoryData.message || "Create inventory failed.");
-      }
-
       router.push(`/marketplace/${productData.id}`);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
+    } catch (err: unknown) {
+      const message =
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : "Something went wrong.";
+      setError(message);
     } finally {
       setLoading(false);
     }

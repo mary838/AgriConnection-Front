@@ -4,26 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, SlidersHorizontal, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import Pagination from "@/components/Pagination";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
-
-type Product = {
-  id: string;
-  productCode: string;
-  name: string;
-  category: string;
-  farmerId: string;
-  imageUrl?: string;
-  priceUsd: number | string;
-  unit: string;
-  farmer?: {
-    id: string;
-    farmerCode?: string;
-    user?: {
-      name?: string;
-    };
-  };
-};
+import { products as productsApi, getToken, ApiError, type Product } from "@/lib/api";
 
 const categories = [
   "All produce",
@@ -49,32 +30,19 @@ export default function MarketplacePage() {
         setLoading(true);
         setError("");
 
-        const token =
-          localStorage.getItem("access_token") ||
-          sessionStorage.getItem("access_token");
-
-        if (!token) {
+        if (!getToken()) {
           window.location.href = "/login?redirect=/marketplace";
           return;
         }
 
-        const res = await fetch(`${API_URL}/products`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to load products.");
-        }
-
+        const data = await productsApi.list();
         setProducts(data);
-      } catch (err: any) {
-        setError(err.message || "Something went wrong.");
+      } catch (err: unknown) {
+        const message =
+          err instanceof ApiError || err instanceof Error
+            ? err.message
+            : "Something went wrong.";
+        setError(message);
       } finally {
         setLoading(false);
       }

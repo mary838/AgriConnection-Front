@@ -4,21 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Settings, Mail, Phone, Globe, Lock, Pencil } from "lucide-react";
+import { profile as profileApi, getToken, ApiError, type User } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-
-type Profile = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  phone: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+type Profile = User;
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { logout } = useAuth();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [name, setName] = useState("");
@@ -28,28 +21,23 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const getToken = () =>
-    localStorage.getItem("access_token") ||
-    sessionStorage.getItem("access_token");
-
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = getToken();
-        if (!token) { router.push("/login"); return; }
+        if (!getToken()) { router.push("/login"); return; }
 
-        const res = await fetch(`${API_URL}/profile`, {
-          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to load profile.");
+        const data = await profileApi.get();
 
         setProfile(data);
         setName(data.name);
         setPhone(data.phone || "");
         localStorage.setItem("user", JSON.stringify(data));
-      } catch (err: any) {
-        setError(err.message || "Something went wrong.");
+      } catch (err: unknown) {
+        const message =
+          err instanceof ApiError || err instanceof Error
+            ? err.message
+            : "Something went wrong.";
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -72,38 +60,27 @@ export default function ProfilePage() {
       setError("");
       setSuccess("");
 
-      const token = getToken();
-      if (!token) { router.push("/login"); return; }
+      if (!getToken()) { router.push("/login"); return; }
 
-      const res = await fetch(`${API_URL}/profile`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ name }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to update profile.");
+      const data = await profileApi.update({ name });
 
       setProfile(data);
       setName(data.name);
       localStorage.setItem("user", JSON.stringify(data));
       setSuccess("Profile updated successfully.");
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
+    } catch (err: unknown) {
+      const message =
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : "Something went wrong.";
+      setError(message);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("customer");
-    localStorage.removeItem("farmer");
-    sessionStorage.removeItem("access_token");
+  const handleLogout = async () => {
+    await logout();
     router.push("/login");
   };
 

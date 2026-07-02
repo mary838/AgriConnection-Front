@@ -11,30 +11,7 @@ import {
   MapPin,
   Package,
 } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
-
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-};
-
-type Customer = {
-  id: string;
-  userId: string;
-  name: string;
-  phone?: string;
-  address?: string;
-  district?: string;
-  provinceId?: number;
-  province?: {
-    id: number;
-    name: string;
-    region?: string;
-  };
-};
+import { auth, profile as profileApi, customers as customersApi, getToken, clearToken, ApiError, type User, type Customer } from "@/lib/api";
 
 export default function CustomerDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -48,56 +25,31 @@ export default function CustomerDashboardPage() {
         setLoading(true);
         setError("");
 
-        const token =
-          localStorage.getItem("access_token") ||
-          sessionStorage.getItem("access_token");
-
-        if (!token) {
+        if (!getToken()) {
           window.location.href = "/login";
           return;
         }
 
-        const profileRes = await fetch(`${API_URL}/profile`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const profileData = await profileRes.json();
-
-        if (!profileRes.ok) {
-          throw new Error(profileData.message || "Failed to load profile.");
-        }
-
+        const profileData = await profileApi.get();
         setUser(profileData);
         localStorage.setItem("user", JSON.stringify(profileData));
 
-        const customersRes = await fetch(`${API_URL}/customers`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const customersData = await customersRes.json();
-
-        if (!customersRes.ok) {
-          throw new Error(customersData.message || "Failed to load customer data.");
-        }
+        const customersData = await customersApi.list();
 
         const currentCustomer = customersData.find(
-          (item: Customer) => item.userId === profileData.id
+          (item) => item.userId === profileData.id
         );
 
         if (currentCustomer) {
           setCustomer(currentCustomer);
           localStorage.setItem("customer", JSON.stringify(currentCustomer));
         }
-      } catch (err: any) {
-        setError(err.message || "Something went wrong.");
+      } catch (err: unknown) {
+        const message =
+          err instanceof ApiError || err instanceof Error
+            ? err.message
+            : "Something went wrong.";
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -155,9 +107,11 @@ export default function CustomerDashboardPage() {
           </Link>
 
           <button
-            onClick={() => {
-              localStorage.clear();
-              sessionStorage.clear();
+            onClick={async () => {
+              await auth.logout().catch(() => {});
+              clearToken();
+              localStorage.removeItem("user");
+              localStorage.removeItem("customer");
               window.location.href = "/login";
             }}
             className="mt-4 flex items-center gap-2 text-[#b8c9b3] text-sm hover:text-white"
