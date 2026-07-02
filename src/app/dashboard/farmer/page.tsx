@@ -1,299 +1,514 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, Package, ShoppingBag, BarChart2,
-  Settings, LogOut, Plus, ArrowUpRight, TrendingUp, Menu, X,
+  BarChart3,
+  Box,
+  Grid2X2,
+  LogOut,
+  Package,
+  Settings,
+  ShoppingBag,
 } from "lucide-react";
 
-const navItems = [
-  { icon: LayoutDashboard, label: "Overview",  href: "/dashboard/farmer" },
-  { icon: Package,         label: "Products",  href: "/dashboard/farmer/products" },
-  { icon: ShoppingBag,     label: "Orders",    href: "/dashboard/farmer/orders" },
-  { icon: BarChart2,       label: "Reports",   href: "/dashboard/farmer/reports" },
-  { icon: Settings,        label: "Settings",  href: "/dashboard/farmer/settings" },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
-const stats = [
-  { label: "Total revenue",  value: "$12,480", sub: "+12%",        subColor: "text-[#2d5a1b]", featured: false },
-  { label: "Active orders",  value: "24",      sub: "8 pending",   subColor: "text-[#7a8a6a]", featured: false },
-  { label: "Product views",  value: "1.2k",    sub: "Trending up", subColor: "text-[#2d5a1b]", featured: false },
-  { label: "Platform health",value: "Optimal", sub: "Verified farmer", subColor: "text-white/70", featured: true },
-];
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+};
 
-const inventory = [
-  { id: 1, name: "Heirloom Tomatoes", price: "$4.50/lb", stock: "In stock: 140 units", lowStock: false, primaryAction: "Edit",    secondaryAction: "Archive", image: "https://images.unsplash.com/photo-1582284540020-8acbe03f4924?w=600&q=80" },
-  { id: 2, name: "Curly Green Kale",  price: "$3.00/ea", stock: "Low stock: 12 units", lowStock: true,  primaryAction: "Restock", secondaryAction: "Archive", image: "https://images.unsplash.com/photo-1524179091875-bf99a9a6af57?w=600&q=80" },
-  { id: 3, name: "Strawberries",      price: "$5.75/pt", stock: "In stock: 68 units",  lowStock: false, primaryAction: "Edit",    secondaryAction: "Archive", image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=600&q=80" },
-  { id: 4, name: "Wildflower Honey",  price: "$12.50/jar",stock:"In stock: 32 units",  lowStock: false, primaryAction: "Edit",    secondaryAction: "Archive", image: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&q=80" },
-];
+type Farmer = {
+  id: string;
+  farmerCode: string;
+  userId: string;
+  provinceId: number;
+  phone: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  province?: {
+    id: number;
+    name: string;
+    region?: string;
+  };
+};
 
-const orders = [
-  { id: "#8812", customer: "Clara J.",  initials: "C", items: "3 items",  status: "PAID",    statusColor: "bg-[#eaf2e4] text-[#2d5a1b]" },
-  { id: "#8811", customer: "Mark T.",   initials: "M", items: "12 items", status: "PENDING", statusColor: "bg-[#fef3e2] text-[#b45309]" },
-  { id: "#8809", customer: "Sarah L.",  initials: "S", items: "2 items",  status: "SHIPPED", statusColor: "bg-[#e8edf8] text-[#3b4da0]" },
-  { id: "#8805", customer: "Diego R.",  initials: "D", items: "5 items",  status: "PAID",    statusColor: "bg-[#eaf2e4] text-[#2d5a1b]" },
-];
+export default function FarmerDashboardPage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [farmer, setFarmer] = useState<Farmer | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-const weekData = [40, 65, 50, 80, 95, 70, 60];
-const maxVal = Math.max(...weekData);
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const token =
+          localStorage.getItem("access_token") ||
+          sessionStorage.getItem("access_token");
 
-export default function FarmerDashboard() {
-  const [active, setActive] = useState("Overview");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+        if (!token) {
+          window.location.href = "/login";
+          return;
+        }
+
+        const profileRes = await fetch(`${API_URL}/profile`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const profileData = await profileRes.json();
+
+        if (!profileRes.ok) {
+          throw new Error(profileData.message || "Failed to load profile.");
+        }
+
+        setUser(profileData);
+        localStorage.setItem("user", JSON.stringify(profileData));
+
+        const farmersRes = await fetch(`${API_URL}/farmers`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const farmersData = await farmersRes.json();
+
+        if (!farmersRes.ok) {
+          throw new Error(farmersData.message || "Failed to load farmer data.");
+        }
+
+        const currentFarmer = farmersData.find(
+          (item: Farmer) => item.userId === profileData.id
+        );
+
+        if (currentFarmer) {
+          setFarmer(currentFarmer);
+          localStorage.setItem("farmer", JSON.stringify(currentFarmer));
+        }
+      } catch (err: any) {
+        setError(err.message || "Something went wrong.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#f4efe5] flex items-center justify-center text-[#102615]">
+        Loading farmer dashboard...
+      </main>
+    );
+  }
 
   return (
-    <div className="flex min-h-screen bg-[#f5f2eb]">
-
-      {/* Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-[220px] bg-[#1e3d18] flex flex-col transition-transform duration-300 md:relative md:translate-x-0 md:z-auto md:shrink-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        {/* Close button (mobile) */}
-        <button
-          className="md:hidden absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
-          onClick={() => setSidebarOpen(false)}
-        >
-          <X size={18} />
-        </button>
-
-        {/* Logo */}
-        <div className="px-6 pt-7 pb-6">
-          <Link href="/" onClick={() => setSidebarOpen(false)}>
-            <p className="text-white text-[17px] font-semibold italic" style={{ fontFamily: "Georgia, serif" }}>
-              AgriConnect
-            </p>
-            <p className="text-white/40 text-[10px] font-semibold tracking-[0.18em] uppercase mt-0.5">
-              Farmer Portal
-            </p>
+    <main className="min-h-screen bg-[#f4efe5] flex text-[#102615]">
+      <aside className="w-[270px] bg-[#174832] min-h-screen p-7 flex flex-col justify-between sticky top-0">
+        <div>
+          <Link
+            href="/"
+            className="text-white text-2xl"
+            style={{ fontFamily: "Georgia, serif" }}
+          >
+            AgriConnect
           </Link>
+
+          <p className="text-[#9db79d] text-[11px] tracking-[0.22em] uppercase mt-2 font-semibold">
+            Farmer Portal
+          </p>
+
+          <nav className="mt-12 flex flex-col gap-2">
+            <SidebarLink
+              active
+              icon={<Grid2X2 size={16} />}
+              label="Overview"
+              href="/dashboard/farmer"
+            />
+            <SidebarLink
+              icon={<Box size={16} />}
+              label="Products"
+              href="/dashboard/farmer/products"
+            />
+            <SidebarLink
+              icon={<ShoppingBag size={16} />}
+              label="Orders"
+              href="/dashboard/farmer/orders"
+            />
+            <SidebarLink
+              icon={<BarChart3 size={16} />}
+              label="Reports"
+              href="/dashboard/farmer/reports"
+            />
+            <SidebarLink
+              icon={<Settings size={16} />}
+              label="Settings"
+              href="/profile"
+            />
+          </nav>
         </div>
 
-        {/* Nav */}
-        <nav className="flex flex-col gap-1 px-3 flex-1">
-          {navItems.map(({ icon: Icon, label, href }) => (
-            <Link
-              key={label}
-              href={href}
-              onClick={() => { setActive(label); setSidebarOpen(false); }}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-colors ${
-                active === label
-                  ? "bg-white/15 text-white"
-                  : "text-white/60 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              <Icon size={16} />
-              {label}
-            </Link>
-          ))}
-        </nav>
+        <div className="rounded-2xl bg-white/10 p-4">
+          <Link href="/profile" className="flex items-center gap-3 hover:opacity-80">
+            <div className="w-11 h-11 rounded-full bg-[#dce8d4] flex items-center justify-center text-[#174832] font-bold">
+              {user?.name?.charAt(0).toUpperCase() || "F"}
+            </div>
 
-        {/* Profile */}
-        <div className="mx-3 mb-4 bg-white/10 rounded-xl px-4 py-3">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-full overflow-hidden bg-[#b8cfa8] shrink-0">
-              <img
-                src="https://preview--farm-ease-online.lovable.app/assets/farmer-avatar-Den9lHiu.jpg"
-                alt="Marcus Bell"
-                className="w-full h-full object-cover"
-              />
-            </div>
             <div>
-              <p className="text-white text-[13px] font-medium leading-tight">Marcus Bell</p>
-              <p className="text-white/50 text-[11px]">Green Valley Farms</p>
+              <p className="text-white text-sm font-semibold">
+                {user?.name || "Farmer"}
+              </p>
+              <p className="text-[#b8c9b3] text-xs">
+                {farmer?.province?.name || farmer?.farmerCode || "View profile"}
+              </p>
             </div>
-          </div>
-          <button className="flex items-center gap-2 text-white/50 hover:text-white text-[12px] transition-colors">
-            <LogOut size={13} />
+          </Link>
+
+          <button
+            onClick={() => {
+              localStorage.clear();
+              sessionStorage.clear();
+              window.location.href = "/login";
+            }}
+            className="mt-4 flex items-center gap-2 text-[#b8c9b3] text-sm hover:text-white"
+          >
+            <LogOut size={14} />
             Sign out
           </button>
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 min-w-0 overflow-y-auto">
-        <div className="max-w-[1100px] mx-auto px-4 sm:px-8 py-6 sm:py-10">
+      <section className="flex-1 px-12 py-10">
+        {error && (
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-600 text-sm">
+            {error}
+          </div>
+        )}
 
-          {/* Mobile top bar */}
-          <div className="md:hidden flex items-center gap-3 mb-6">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 text-[#4a5568] hover:text-[#1c2b1a] transition-colors"
-            >
-              <Menu size={22} />
-            </button>
-            <p className="text-[17px] font-semibold italic text-[#1c2b1a]" style={{ fontFamily: "Georgia, serif" }}>
-              AgriConnect
+        <div className="flex items-start justify-between gap-8 mb-12">
+          <div>
+            <p className="text-[12px] tracking-[0.28em] uppercase text-[#1e6b42] font-bold mb-2">
+              Morning, {user?.name?.split(" ")[0] || "Farmer"}
             </p>
-          </div>
 
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
-            <div>
-              <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#2d5a1b] mb-1">
-                Morning, Marcus
-              </p>
-              <h1 className="text-[28px] sm:text-[36px] font-semibold text-[#1c2b1a] leading-tight" style={{ fontFamily: "Georgia, serif" }}>
-                Green Valley Farms
-              </h1>
-              <p className="text-[18px] sm:text-[22px] font-normal italic text-[#7a8a6a]" style={{ fontFamily: "Georgia, serif" }}>
+            <h1
+              className="text-[50px] leading-[0.95]"
+              style={{ fontFamily: "Georgia, serif" }}
+            >
+              {user?.name || "Green Valley Farms"}
+              <br />
+              <em className="text-[#857d74] font-normal">
                 Performance overview
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button className="px-4 sm:px-5 py-2.5 border border-[#c8d0b8] rounded-full text-[13px] font-medium text-[#1c2b1a] bg-white hover:bg-[#f0ece4] transition-colors whitespace-nowrap">
-                Export report
-              </button>
-              <button className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-[#1e3d18] text-white rounded-full text-[13px] font-medium hover:bg-[#2d5a1b] transition-colors whitespace-nowrap">
-                <Plus size={14} />
-                New product
-              </button>
-            </div>
+              </em>
+            </h1>
           </div>
 
-          {/* Stats grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-            {stats.map((s) => (
-              <div
-                key={s.label}
-                className={`rounded-2xl p-4 sm:p-5 flex flex-col gap-2 ${
-                  s.featured ? "bg-[#1e3d18]" : "bg-white border border-[#ede8df]"
-                }`}
-              >
-                <p className={`text-[12px] ${s.featured ? "text-white/60" : "text-[#9aaa8a]"}`}>
-                  {s.label}
-                </p>
-                <p
-                  className={`text-[24px] sm:text-[30px] font-semibold leading-none ${s.featured ? "text-white" : "text-[#1c2b1a]"}`}
-                  style={{ fontFamily: "Georgia, serif" }}
-                >
-                  {s.value}
-                </p>
-                <p className={`text-[12px] font-medium ${s.subColor}`}>
-                  {s.sub}
-                </p>
-              </div>
-            ))}
-          </div>
+          <div className="flex gap-3">
+            <button className="rounded-full bg-white border border-[#e1d8ca] px-7 py-4 text-sm font-semibold hover:border-[#174832]">
+              Export report
+            </button>
 
-          {/* Two-column layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-
-            {/* Left: Inventory */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[20px] sm:text-[22px] font-semibold text-[#1c2b1a]" style={{ fontFamily: "Georgia, serif" }}>
-                  Current inventory
-                </h2>
-                <Link href="/dashboard/farmer/products" className="text-[13px] font-medium text-[#2d5a1b] hover:underline">
-                  View catalog →
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {inventory.map((item) => (
-                  <div key={item.id} className="bg-white rounded-2xl overflow-hidden border border-[#ede8df]">
-                    <div className="aspect-[4/3] overflow-hidden bg-[#e8e0d0]">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-[14px] font-medium text-[#1c2b1a]" style={{ fontFamily: "Georgia, serif" }}>
-                          {item.name}
-                        </p>
-                        <p className="text-[13px] font-semibold text-[#1c2b1a] shrink-0">{item.price}</p>
-                      </div>
-                      <p className={`text-[12px] mb-3 font-medium ${item.lowStock ? "text-red-500" : "text-[#9aaa8a]"}`}>
-                        {item.stock}
-                      </p>
-                      <div className="flex gap-2">
-                        <button className="flex-1 py-2 border border-[#ddd8cc] rounded-full text-[12px] font-medium text-[#1c2b1a] hover:bg-[#f0ece4] transition-colors">
-                          {item.primaryAction}
-                        </button>
-                        <button className="flex-1 py-2 border border-[#ddd8cc] rounded-full text-[12px] font-medium text-[#1c2b1a] hover:bg-[#f0ece4] transition-colors">
-                          {item.secondaryAction}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right: Orders + Insight */}
-            <div className="flex flex-col gap-4">
-
-              {/* Incoming orders */}
-              <div>
-                <h2 className="text-[20px] sm:text-[22px] font-semibold text-[#1c2b1a] mb-4" style={{ fontFamily: "Georgia, serif" }}>
-                  Incoming orders
-                </h2>
-                <div className="flex flex-col gap-3">
-                  {orders.map((o) => (
-                    <div key={o.id} className="bg-white border border-[#ede8df] rounded-2xl px-4 py-3 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#eaf2e4] flex items-center justify-center text-[13px] font-semibold text-[#2d5a1b] shrink-0">
-                        {o.initials}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold text-[#1c2b1a]">Order {o.id}</p>
-                        <p className="text-[11px] text-[#9aaa8a]">{o.customer} · {o.items}</p>
-                      </div>
-                      <span className={`text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-full shrink-0 ${o.statusColor}`}>
-                        {o.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Weekly insight card */}
-              <div className="bg-[#2c1f14] rounded-2xl p-5 flex flex-col gap-3">
-                <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40 flex items-center gap-1">
-                  <TrendingUp size={11} className="text-white/40" />
-                  Weekly Insight
-                </p>
-                <h3 className="text-[18px] sm:text-[20px] font-semibold italic text-white leading-tight" style={{ fontFamily: "Georgia, serif" }}>
-                  Honey crisp apples outperforming
-                </h3>
-                <p className="text-[12px] text-white/60 leading-[1.6]">
-                  +40% revenue vs. the platform average this week. Consider featuring them in the marketplace.
-                </p>
-
-                {/* Mini bar chart */}
-                <div className="flex items-end gap-1.5 h-14 mt-1">
-                  {weekData.map((val, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                      <div
-                        className={`w-full rounded-sm transition-all ${
-                          i === 4 ? "bg-[#5a9a3a]" : "bg-white/20"
-                        }`}
-                        style={{ height: `${(val / maxVal) * 48}px` }}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <p className="text-[10px] text-white/30 tracking-widest">MON — SUN</p>
-
-                <Link
-                  href="/dashboard/farmer/reports"
-                  className="flex items-center justify-center gap-1.5 w-full py-2.5 bg-white rounded-full text-[12px] font-semibold text-[#1c2b1a] hover:bg-white/90 transition-colors mt-1"
-                >
-                  See full analytics
-                  <ArrowUpRight size={13} />
-                </Link>
-              </div>
-
-            </div>
+            <Link
+              href="/dashboard/farmer/products/new"
+              className="rounded-full bg-[#174832] px-7 py-4 text-sm font-semibold text-white hover:bg-[#216343]"
+            >
+              + New product
+            </Link>
           </div>
         </div>
-      </main>
+
+        <div className="grid md:grid-cols-4 gap-6 mb-14">
+          <StatCard title="Total revenue" value="$12,480" note="+12%" />
+          <StatCard title="Active orders" value="24" note="8 pending" />
+          <StatCard title="Product views" value="1.2K" note="Trending up" />
+          <div className="rounded-[26px] bg-[#174832] text-white p-8 shadow-md">
+            <p className="text-[#9db79d] text-sm mb-5">Platform health</p>
+            <p
+              className="text-[38px]"
+              style={{ fontFamily: "Georgia, serif" }}
+            >
+              Optimal
+            </p>
+            <p className="text-[#c6dcc6] text-sm mt-2">
+              {farmer?.status === "active" ? "Verified farmer" : farmer?.status || "Pending farmer"}
+            </p>
+          </div>
+        </div>
+
+        {farmer && (
+          <div className="grid md:grid-cols-4 gap-5 mb-12">
+            <InfoCard title="Farmer Code" value={farmer.farmerCode} />
+            <InfoCard title="Phone" value={farmer.phone || "N/A"} />
+            <InfoCard
+              title="Province"
+              value={farmer.province?.name || `Province ID ${farmer.provinceId}`}
+            />
+            <InfoCard title="Status" value={farmer.status} />
+          </div>
+        )}
+
+        <div className="grid lg:grid-cols-[1.6fr_0.8fr] gap-12">
+          <section>
+            <div className="flex items-center justify-between mb-7">
+              <h2
+                className="text-[28px]"
+                style={{ fontFamily: "Georgia, serif" }}
+              >
+                Current inventory
+              </h2>
+
+              <Link
+                href="/dashboard/farmer/products"
+                className="text-[#1e6b42] text-sm font-semibold"
+              >
+                View catalog →
+              </Link>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {products.map((product) => (
+                <ProductCard key={product.name} product={product} />
+              ))}
+            </div>
+          </section>
+
+          <aside>
+            <h2
+              className="text-[28px] mb-7"
+              style={{ fontFamily: "Georgia, serif" }}
+            >
+              Incoming orders
+            </h2>
+
+            <div className="flex flex-col gap-4 mb-10">
+              {incomingOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="bg-white rounded-3xl p-4 flex items-center gap-4 border border-[#e6dfd2]"
+                >
+                  <div className="w-12 h-12 rounded-full bg-[#d8f5df] flex items-center justify-center text-[#174832] font-semibold">
+                    {order.customer.charAt(0)}
+                  </div>
+
+                  <div className="flex-1">
+                    <p className="font-semibold text-[#102615]">
+                      Order {order.id}
+                    </p>
+                    <p className="text-[#8a8174] text-sm">
+                      {order.customer} · {order.items}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`text-[10px] font-bold rounded-full px-3 py-1 ${
+                      order.status === "PAID"
+                        ? "bg-[#dff7ea] text-[#008454]"
+                        : order.status === "PENDING"
+                        ? "bg-[#fff0cf] text-[#b17400]"
+                        : "bg-[#e6edf7] text-[#244e7a]"
+                    }`}
+                  >
+                    {order.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-[#4b3324] rounded-[28px] p-8 text-white">
+              <p className="text-[#bba997] text-[12px] tracking-[0.2em] uppercase mb-5">
+                Weekly Insight
+              </p>
+
+              <h3
+                className="text-[25px] leading-tight mb-5"
+                style={{ fontFamily: "Georgia, serif" }}
+              >
+                Honey crisp apples outperforming
+              </h3>
+
+              <p className="text-[#d6c9bd] text-sm leading-relaxed">
+                +40% revenue vs. the platform average this week. Consider
+                featuring them in the marketplace.
+              </p>
+
+              <div className="flex items-end gap-2 h-28 mt-8">
+                {[38, 62, 50, 88, 65, 58, 52].map((height, index) => (
+                  <div
+                    key={index}
+                    className={`w-5 rounded-t-full ${
+                      index === 3 ? "bg-[#2f8b68]" : "bg-white/20"
+                    }`}
+                    style={{ height }}
+                  />
+                ))}
+              </div>
+
+              <p className="text-[#bba997] text-xs mt-3">MON — SUN</p>
+            </div>
+
+            <Link
+              href="/dashboard/farmer/reports"
+              className="mt-6 flex items-center justify-center rounded-full bg-white border border-[#d8d0c3] py-4 text-sm font-semibold hover:border-[#174832]"
+            >
+              See full analytics ↗
+            </Link>
+          </aside>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function SidebarLink({
+  icon,
+  label,
+  href,
+  active = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  href: string;
+  active?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 rounded-full px-4 py-3 text-sm font-semibold ${
+        active
+          ? "bg-white/12 text-white"
+          : "text-[#b8c9b3] hover:bg-white/10 hover:text-white"
+      }`}
+    >
+      {icon}
+      {label}
+    </Link>
+  );
+}
+
+function StatCard({
+  title,
+  value,
+  note,
+}: {
+  title: string;
+  value: string;
+  note: string;
+}) {
+  return (
+    <div className="rounded-[26px] bg-white p-8 border border-[#e6dfd2] shadow-sm">
+      <p className="text-[#9b9188] text-sm mb-5">{title}</p>
+      <p
+        className="text-[38px] text-[#2b160c]"
+        style={{ fontFamily: "Georgia, serif" }}
+      >
+        {value}
+      </p>
+      <p className="text-[#009b5a] text-sm font-semibold mt-2">{note}</p>
     </div>
   );
 }
+
+function InfoCard({ title, value }: { title: string; value: string }) {
+  return (
+    <div className="rounded-3xl bg-white border border-[#e0dbd0] p-5">
+      <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#7a8a6a] mb-2">
+        {title}
+      </p>
+      <p className="text-[#1c2b1a] font-semibold capitalize">{value}</p>
+    </div>
+  );
+}
+
+function ProductCard({
+  product,
+}: {
+  product: {
+    name: string;
+    price: string;
+    stock: string;
+    low?: boolean;
+    image: string;
+  };
+}) {
+  return (
+    <div className="bg-white rounded-3xl overflow-hidden border border-[#e6dfd2]">
+      <div
+        className="h-[170px] bg-cover bg-center"
+        style={{ backgroundImage: `url(${product.image})` }}
+      />
+
+      <div className="p-5">
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 style={{ fontFamily: "Georgia, serif" }}>{product.name}</h3>
+            <p
+              className={`text-sm mt-2 ${
+                product.low ? "text-red-500 font-semibold" : "text-[#8a8174]"
+              }`}
+            >
+              {product.stock}
+            </p>
+          </div>
+
+          <p className="text-sm">{product.price}</p>
+        </div>
+
+        <div className="flex gap-3 mt-5">
+          <button className="flex-1 rounded-full border border-[#e1d8ca] py-2 text-sm font-semibold hover:border-[#174832]">
+            {product.low ? "Restock" : "Edit"}
+          </button>
+          <button className="rounded-full border border-[#e1d8ca] px-5 py-2 text-sm font-semibold hover:border-[#174832]">
+            Archive
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const products = [
+  {
+    name: "Heirloom Tomatoes",
+    price: "$4.50/lb",
+    stock: "In stock: 140 units",
+    image:
+      "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=700&q=80",
+  },
+  {
+    name: "Curly Green Kale",
+    price: "$3.00/ea",
+    stock: "Low stock: 12 units",
+    low: true,
+    image:
+      "https://images.unsplash.com/photo-1524179091875-bf99a9a6af57?w=700&q=80",
+  },
+  {
+    name: "Strawberries",
+    price: "$5.75/pt",
+    stock: "In stock: 68 units",
+    image:
+      "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=700&q=80",
+  },
+  {
+    name: "Wildflower Honey",
+    price: "$12.50/jar",
+    stock: "In stock: 32 units",
+    image:
+      "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=700&q=80",
+  },
+];
+
+const incomingOrders = [
+  { id: "#8812", customer: "Clara J.", items: "3 items", status: "PAID" },
+  { id: "#8811", customer: "Mark T.", items: "2 items", status: "PENDING" },
+  { id: "#8809", customer: "Sarah L.", items: "5 items", status: "SHIPPED" },
+  { id: "#8805", customer: "Diego R.", items: "1 item", status: "PAID" },
+];

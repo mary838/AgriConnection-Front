@@ -1,8 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Minus, Plus, X } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const initialItems = [
   {
@@ -37,8 +38,17 @@ const initialItems = [
 const DELIVERY = 4.5;
 
 export default function CartPage() {
-  const router = useRouter(); // ✅ moved inside the component
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
   const [items, setItems] = useState(initialItems);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace("/login?redirect=/cart");
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading || !user) return null;
 
   const updateQty = (id: number, delta: number) => {
     setItems((prev) =>
