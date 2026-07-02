@@ -39,7 +39,7 @@ export default function HarvestSection() {
       <div className="max-w-screen-xl mx-auto px-6 lg:px-12">
 
         {/* Header row */}
-        <div className="flex items-end justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-8">
           <div>
             <h2
               className="text-[32px] font-semibold text-[#1c2b1a] leading-tight"

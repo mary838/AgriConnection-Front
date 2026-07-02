@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { ShoppingCart, Menu, X } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const navLinks = [
-  { label: "Home",         href: "/" },
-  { label: "Marketplace",  href: "/marketplace" },
-  { label: "Farmer Portal",href: "/dashboard/farmer" },
-  { label: "Admin",        href: "/dashboard/admin" },
-  { label: "My Account",   href: "/dashboard/customer" },
+  { label: "Home", href: "/" },
+  { label: "Marketplace", href: "/marketplace" },
+  { label: "Farmer Portal", href: "/dashboard/farmer" },
+  { label: "Admin", href: "/dashboard/admin" },
+  { label: "My Account", href: "/dashboard/customer" },
+  { label: "Profile", href: "/profile" },
 ];
 
 interface NavbarProps {
@@ -19,6 +21,9 @@ interface NavbarProps {
 
 export default function Navbar({ cartCount = 3 }: NavbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -27,6 +32,25 @@ export default function Navbar({ cartCount = 3 }: NavbarProps) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const handleCartClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      router.push("/login?redirect=/cart");
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("customer");
+    localStorage.removeItem("farmer");
+    sessionStorage.removeItem("access_token");
+    router.push("/");
+  };
+
+  const initials = user?.email ? user.email[0].toUpperCase() : "?";
 
   return (
     <nav
@@ -38,8 +62,6 @@ export default function Navbar({ cartCount = 3 }: NavbarProps) {
     >
       <div className="max-w-screen-xl mx-auto px-6">
         <div className="flex items-center h-[52px] gap-8">
-
-          {/* Logo */}
           <Link
             href="/"
             className="text-[#2d5a1b] font-semibold text-[17px] italic tracking-tight shrink-0 select-none"
@@ -48,31 +70,32 @@ export default function Navbar({ cartCount = 3 }: NavbarProps) {
             AgriConnect
           </Link>
 
-          {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-0 flex-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`text-[13.5px] px-4 py-1.5 transition-colors whitespace-nowrap ${
-                  pathname === link.href
-                    ? "text-[#2d5a1b] font-medium"
-                    : "text-[#4a5568] hover:text-[#2d5a1b]"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              if (!user && link.href === "/profile") return null;
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`text-[13.5px] px-4 py-1.5 transition-colors whitespace-nowrap ${
+                    pathname === link.href
+                      ? "text-[#2d5a1b] font-medium"
+                      : "text-[#4a5568] hover:text-[#2d5a1b]"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
 
           <div className="flex-1 hidden md:block" />
 
-          {/* Right side */}
           <div className="flex items-center gap-3 shrink-0">
-
-            {/* Cart */}
             <Link
               href="/cart"
+              onClick={handleCartClick}
               className="relative text-[#4a5568] hover:text-[#2d5a1b] transition-colors"
               aria-label={`Cart, ${cartCount} items`}
             >
@@ -84,23 +107,36 @@ export default function Navbar({ cartCount = 3 }: NavbarProps) {
               )}
             </Link>
 
-            {/* Sign in */}
-            <Link
-              href="/login"
-              className="hidden sm:block text-[13.5px] text-[#4a5568] hover:text-[#2d5a1b] transition-colors px-1"
-            >
-              Sign in
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/profile"
+                  className="w-[34px] h-[34px] rounded-full bg-[#b8cfa8] ring-2 ring-[#c8d8b8] shrink-0 flex items-center justify-center text-[#2d5a1b] text-[13px] font-semibold"
+                  title="Profile"
+                >
+                  {initials}
+                </Link>
 
-            {/* Avatar — initials fallback, no broken image */}
-            <Link
-              href="/dashboard/customer"
-              className="w-[34px] h-[34px] rounded-full bg-[#b8cfa8] ring-2 ring-[#c8d8b8] shrink-0 flex items-center justify-center text-[#2d5a1b] text-[13px] font-semibold"
-            >
-              M
-            </Link>
+                <button
+                  onClick={handleLogout}
+                  className="hidden sm:block text-[13.5px] text-[#4a5568] hover:text-[#2d5a1b] transition-colors px-1"
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="hidden sm:block text-[13.5px] text-[#4a5568] hover:text-[#2d5a1b] transition-colors px-1"
+                >
+                  Sign in
+                </Link>
 
-            {/* Mobile hamburger */}
+                <div className="w-[34px] h-[34px] rounded-full bg-[#e8eed8] ring-2 ring-[#c8d8b8] shrink-0" />
+              </>
+            )}
+
             <button
               className="md:hidden p-1.5 text-[#4a5568] hover:text-[#2d5a1b] transition-colors"
               onClick={() => setMobileOpen((v) => !v)}
@@ -112,30 +148,56 @@ export default function Navbar({ cartCount = 3 }: NavbarProps) {
         </div>
       </div>
 
-      {/* Mobile dropdown */}
       {mobileOpen && (
         <div className="md:hidden border-t border-[#dce4d3] bg-white/90 backdrop-blur-md px-6 py-3 flex flex-col">
-          {navLinks.map((link) => (
+          {navLinks.map((link) => {
+            if (!user && link.href === "/profile") return null;
+
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className={`text-sm py-2.5 border-b border-[#e8eed8] last:border-0 transition-colors ${
+                  pathname === link.href
+                    ? "text-[#2d5a1b] font-medium"
+                    : "text-[#4a5568] hover:text-[#2d5a1b]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+
+          {user ? (
+            <>
+              <Link
+                href="/profile"
+                onClick={() => setMobileOpen(false)}
+                className="text-sm py-2.5 text-[#4a5568] hover:text-[#2d5a1b] transition-colors"
+              >
+                Profile ({user.email})
+              </Link>
+
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  handleLogout();
+                }}
+                className="text-sm py-2.5 text-[#4a5568] hover:text-[#2d5a1b] transition-colors text-left"
+              >
+                Log out
+              </button>
+            </>
+          ) : (
             <Link
-              key={link.href}
-              href={link.href}
+              href="/login"
               onClick={() => setMobileOpen(false)}
-              className={`text-sm py-2.5 border-b border-[#e8eed8] last:border-0 transition-colors ${
-                pathname === link.href
-                  ? "text-[#2d5a1b] font-medium"
-                  : "text-[#4a5568] hover:text-[#2d5a1b]"
-              }`}
+              className="text-sm py-2.5 text-[#4a5568] hover:text-[#2d5a1b] transition-colors"
             >
-              {link.label}
+              Sign in
             </Link>
-          ))}
-          <Link
-            href="/login"
-            onClick={() => setMobileOpen(false)}
-            className="text-sm py-2.5 text-[#4a5568] hover:text-[#2d5a1b] transition-colors"
-          >
-            Sign in
-          </Link>
+          )}
         </div>
       )}
     </nav>

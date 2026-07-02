@@ -61,7 +61,7 @@ export default function PerspectivesSection() {
             Built for Three
           </p>
           <h2
-            className="text-[40px] font-semibold text-[#1c2b1a] leading-tight"
+            className="text-[28px] sm:text-[40px] font-semibold text-[#1c2b1a] leading-tight"
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             One ecosystem, three perspectives.

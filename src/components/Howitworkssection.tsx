@@ -42,7 +42,7 @@ export default function HowItWorksSection() {
 
         {/* Title */}
         <h2
-          className="text-[36px] font-semibold text-[#1c2b1a] text-center mb-14"
+          className="text-[26px] sm:text-[36px] font-semibold text-[#1c2b1a] text-center mb-10 sm:mb-14"
           style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
         >
           How AgriConnect works
